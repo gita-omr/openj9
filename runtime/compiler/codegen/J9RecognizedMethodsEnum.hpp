@@ -439,13 +439,19 @@
    sun_misc_Unsafe_ensureClassInitialized,
 
    jdk_internal_misc_Unsafe_copyMemory0,
-
    jdk_internal_loader_NativeLibraries_load,
 
    jdk_internal_vm_vector_VectorSupport_load,
    jdk_internal_vm_vector_VectorSupport_binaryOp,
    jdk_internal_vm_vector_VectorSupport_store,
       
+   jdk_incubator_vector_FloatVector_fromArray,
+   jdk_incubator_vector_FloatVector_intoArray,
+   jdk_incubator_vector_FloatVector_fromArray_mask,
+   jdk_incubator_vector_FloatVector_intoArray_mask,
+   jdk_incubator_vector_FloatVector_add,
+   jdk_incubator_vector_VectorSpecies_indexInRange,
+   
    java_lang_reflect_Array_getLength,
    java_util_Arrays_fill,
    java_util_Arrays_equals,
