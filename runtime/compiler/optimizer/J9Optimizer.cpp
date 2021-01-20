@@ -84,6 +84,7 @@
 #include "optimizer/StaticFinalFieldFolding.hpp"
 #include "optimizer/HandleRecompilationOps.hpp"
 #include "optimizer/MethodHandleTransformer.hpp"
+#include "optimizer/VectorAPIExpansion.hpp"
 
 
 static const OptimizationStrategy J9EarlyGlobalOpts[] =
@@ -95,6 +96,7 @@ static const OptimizationStrategy J9EarlyGlobalOpts[] =
    { OMR::staticFinalFieldFolding,             },
    { OMR::osrGuardInsertion,                OMR::MustBeDone       },
    { OMR::osrExceptionEdgeRemoval                       }, // most inlining is done by now
+   { OMR::vectorAPIExpansion                   },
    { OMR::jProfilingBlock                      },
    { OMR::stringBuilderTransformer             },
    { OMR::stringPeepholes,                     },
@@ -316,6 +318,7 @@ static const OptimizationStrategy warmStrategyOpts[] =
    { OMR::staticFinalFieldFolding,                                              },
    { OMR::osrGuardInsertion,                         OMR::MustBeDone       },
    { OMR::osrExceptionEdgeRemoval                       }, // most inlining is done by now
+   { OMR::vectorAPIExpansion                                                    },
    { OMR::jProfilingBlock                                                       },
    { OMR::virtualGuardTailSplitter                                              }, // merge virtual guards
    { OMR::treeSimplification                                                    },
@@ -398,6 +401,7 @@ static const OptimizationStrategy reducedWarmStrategyOpts[] =
    { OMR::staticFinalFieldFolding,                                              },
    { OMR::osrGuardInsertion,                         OMR::MustBeDone       },
    { OMR::osrExceptionEdgeRemoval                                               }, // most inlining is done by now
+   { OMR::vectorAPIExpansion                                                    },
    { OMR::jProfilingBlock                                                       },
    { OMR::dataAccessAccelerator                                                 }, // immediate does unconditional dataAccessAccelerator after inlining
    { OMR::treeSimplification                                                    },
@@ -664,6 +668,7 @@ static const OptimizationStrategy cheapWarmStrategyOpts[] =
    { OMR::staticFinalFieldFolding,                                              },
    { OMR::osrGuardInsertion,                         OMR::MustBeDone        },
    { OMR::osrExceptionEdgeRemoval                                               }, // most inlining is done by now
+   { OMR::vectorAPIExpansion                                                    },
    { OMR::jProfilingBlock                                                       },
    { OMR::virtualGuardTailSplitter                                              }, // merge virtual guards
    { OMR::treeSimplification                                                    },
@@ -841,6 +846,8 @@ J9::Optimizer::Optimizer(TR::Compilation *comp, TR::ResolvedMethodSymbol *method
       new (comp->allocator()) TR::OptimizationManager(self(), TR_HandleRecompilationOps::create, OMR::handleRecompilationOps);
    _opts[OMR::hotFieldMarking] =
       new (comp->allocator()) TR::OptimizationManager(self(), TR_HotFieldMarking::create, OMR::hotFieldMarking);
+   _opts[OMR::vectorAPIExpansion] =
+      new (comp->allocator()) TR::OptimizationManager(self(), TR_VectorAPIExpansion::create, OMR::vectorAPIExpansion);
    // NOTE: Please add new J9 optimizations here!
 
    // initialize additional J9 optimization groups
