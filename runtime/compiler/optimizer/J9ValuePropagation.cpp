@@ -2165,20 +2165,33 @@ J9::ValuePropagation::innerConstrainAcall(TR::Node *node)
          static char *enableDynamicObjectClone = feGetEnv("TR_enableDynamicObjectClone");
          // Dynamic cloning kicks in when we attempt to make direct call to Object.clone
          // or J9VMInternals.primitiveClone where the cloned object is an array.
+         bool vectorSupportIntrinsic =
+            method->getRecognizedMethod() == TR::jdk_internal_vm_vector_VectorSupport_load ||
+            method->getRecognizedMethod() == TR::jdk_internal_vm_vector_VectorSupport_binaryOp ||
+            method->getRecognizedMethod() == TR::jdk_internal_vm_vector_VectorSupport_store;
+         
          if (method->getRecognizedMethod() == TR::java_lang_Object_clone
-             || method->getRecognizedMethod() == TR::java_lang_J9VMInternals_primitiveClone)
+             || method->getRecognizedMethod() == TR::java_lang_J9VMInternals_primitiveClone
+             || vectorSupportIntrinsic)
             {
             bool isGlobal;
-            if (method->getRecognizedMethod() == TR::java_lang_Object_clone)
+            if (method->getRecognizedMethod() == TR::jdk_internal_vm_vector_VectorSupport_binaryOp)
+               constraint = getConstraint(node->getSecondChild(), isGlobal);
+            else if (method->getRecognizedMethod() == TR::java_lang_Object_clone ||
+                vectorSupportIntrinsic)
               constraint = getConstraint(node->getFirstChild(), isGlobal);
             else
               constraint = getConstraint(node->getLastChild(), isGlobal);
+
+            if (vectorSupportIntrinsic)
+               traceMsg(comp(), "   found VectorSupport %p %d\n", constraint, constraint ? constraint->isFixedClass() : 0);
 
             TR::VPResolvedClass *newTypeConstraint = NULL;
             if (constraint)
                {
                // Do nothing if the class of the object doesn't implement Cloneable
-               if (constraint->getClass() && !comp()->fej9()->isCloneable(constraint->getClass()))
+               if (constraint->getClass() && !comp()->fej9()->isCloneable(constraint->getClass()) &&
+                   !vectorSupportIntrinsic)
                   {
                   if (trace())
                      traceMsg(comp(), "Object Clone: Class of node %p is not cloneable, quit\n", node);
@@ -2191,7 +2204,8 @@ J9::ValuePropagation::innerConstrainAcall(TR::Node *node)
                   {
                   newTypeConstraint = TR::VPFixedClass::create(this, constraint->getClass());
 
-                  if (!comp()->compileRelocatableCode())
+                  if (!comp()->compileRelocatableCode() &&
+                      !vectorSupportIntrinsic)
                      {
                      if (constraint->getClassType()
                          && constraint->getClassType()->isArray() == TR_no
@@ -2266,7 +2280,8 @@ J9::ValuePropagation::innerConstrainAcall(TR::Node *node)
                node = setCloneClassInNode(this, node, newConstraint, isGlobal);
 
             // OptimizedClone
-            if(comp()->getOption(TR_EnableJITHelpersoptimizedClone) && newTypeConstraint)
+            if(comp()->getOption(TR_EnableJITHelpersoptimizedClone) && newTypeConstraint &&
+               !vectorSupportIntrinsic)
                transformToOptimizedCloneCall(this, node, true);
             return node;
             }
