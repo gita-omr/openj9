@@ -687,6 +687,7 @@ static const OptimizationStrategy cheapWarmStrategyOpts[] =
    { OMR::sequentialLoadAndStoreWarmGroup,           OMR::IfEnabled                  },
 #endif
    { OMR::cheapGlobalValuePropagationGroup                                      },
+   { OMR::globalValuePropagation,      }, // GITA
    { OMR::dataAccessAccelerator                                                 },
 #ifdef TR_HOST_S390
    { OMR::globalCopyPropagation,                     OMR::IfVoluntaryOSR            },
