@@ -530,11 +530,14 @@ const OptimizationStrategy scorchingStrategyOpts[] =
    { OMR::blockSplitter,                         OMR::IfNews      }, // treeSimplification + blockSplitter + VP => opportunity for EA
    { OMR::arrayPrivatizationGroup,               OMR::IfNews      }, // must precede escape analysis
    { OMR::veryExpensiveGlobalValuePropagationGroup           },
+   //  { OMR::globalValuePropagation,      }, // GITA
+   //   { OMR::localCSE }, // GITA
    { OMR::dataAccessAccelerator                              }, //always run after GVP
    { OMR::osrGuardRemoval,                       OMR::IfEnabled }, // run after calls/monents/asyncchecks have been removed
    { OMR::globalDeadStoreGroup,                              },
    { OMR::idiomRecognition,                      OMR::IfLoopsAndNotProfiling   }, // Early pass of idiomRecognition - Loop Canonicalizer transformations break certain idioms (i.e. arrayTranslateAndTest)
    { OMR::globalCopyPropagation,                 OMR::IfNoLoops       },
+      { OMR::localCSE }, // GITA
    { OMR::loopCanonicalizationGroup,             OMR::IfLoops     }, // canonicalize loops (improve fall throughs)
    { OMR::inductionVariableAnalysis,             OMR::IfLoops     },
    { OMR::redundantInductionVarElimination,      OMR::IfLoops     },
@@ -574,6 +577,7 @@ const OptimizationStrategy scorchingStrategyOpts[] =
    { OMR::treeLowering,                              OMR::MustBeDone                 },
    { OMR::globalDeadStoreElimination,            OMR::IfMoreThanOneBlock }, // global dead store removal
    { OMR::deadTreesElimination                               }, // cleanup after dead store removal
+   { OMR::vectorAPIExpansion                                                    },
    { OMR::compactNullChecks                                  }, // cleanup at the end
    { OMR::finalGlobalGroup                                   }, // done just before codegen
    { OMR::profilingGroup,                        OMR::IfProfiling },
@@ -581,7 +585,7 @@ const OptimizationStrategy scorchingStrategyOpts[] =
    { OMR::hotFieldMarking                                                       },
    { OMR::endOpts                                            }
 #endif
-   };
+   };  // GITA
 
 const OptimizationStrategy sequentialLoadAndStoreColdOpts[] =
    {
