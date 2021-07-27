@@ -161,7 +161,8 @@ TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node)
       TR::Node *rhs = (opCodeValue == TR::astore) ? node->getFirstChild() : node->getSecondChild();
 
       if (!node->chkStoredValueIsIrrelevant() &&
-          rhs->getOpCodeValue() == TR::aconst)
+          (rhs->getOpCodeValue() == TR::aconst ||
+           rhs->getOpCodeValue() == TR::aRegLoad))
          {
          if (_trace)
             traceMsg(comp(), "Invalidating #%p due to rhs %p in node %p\n", node->getSymbolReference()->getReferenceNumber(), rhs, node);
@@ -194,7 +195,8 @@ TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node)
                {
                alias(node, child);
                }
-            else if (child->getOpCodeValue() == TR::aconst)
+            else if (child->getOpCodeValue() == TR::aconst ||
+                     child->getOpCodeValue() == TR::aRegLoad)
                {
                if (_trace)
                   traceMsg(comp(), "Invalidating #%d due to child %p in node %p\n",
@@ -295,7 +297,8 @@ TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node)
    else if (opCode.isArrayRef() ||
             opCode.isLoadIndirect() ||
             opCode.isStoreIndirect() ||
-            node->getOpCodeValue() == TR::areturn)
+            node->getOpCodeValue() == TR::areturn ||
+            node->getOpCodeValue() == TR::aRegStore)
       {
       TR::Node *child = node->getFirstChild();
       if (child->getOpCode().hasSymbolReference())
@@ -710,9 +713,18 @@ TR_VectorAPIExpansion::expandVectorAPI()
          TR::TreeTop *prevTreeTop = treeTop;
          for (int i = 1; i < numLanes; i++)
             {
-            TR::Node *treeTopNode = TR::Node::create(TR::treetop, 1);
-            TR::TreeTop *newTreeTop = TR::TreeTop::create(comp(), treeTopNode, 0, 0);
-            treeTopNode->setAndIncChild(0, getScalarNode(this, node, i));
+            TR::Node *scalarNode = getScalarNode(this, node, i);
+            TR::TreeTop *newTreeTop;
+            if (scalarNode->getOpCode().isStore())
+               {
+               newTreeTop = TR::TreeTop::create(comp(), scalarNode, 0, 0);
+               }
+            else
+               {
+               TR::Node *treeTopNode = TR::Node::create(TR::treetop, 1);
+               newTreeTop = TR::TreeTop::create(comp(), treeTopNode, 0, 0);
+               treeTopNode->setAndIncChild(0, scalarNode);
+               }
 
             prevTreeTop->insertAfter(newTreeTop);
             prevTreeTop = newTreeTop;
@@ -1034,6 +1046,8 @@ TR::Node *TR_VectorAPIExpansion::transformLoad(TR_VectorAPIExpansion *opt, TR::T
    TR::Node *aladdNode = generateAddressNode(array, arrayIndex, elementSize);
 
    anchorOldChildren(opt, treeTop, node);
+   node->setAndIncChild(0, aladdNode);
+   node->setNumChildren(1);
    
    if (mode == doScalarization)
       {
@@ -1044,8 +1058,6 @@ TR::Node *TR_VectorAPIExpansion::transformLoad(TR_VectorAPIExpansion *opt, TR::T
       TR::SymbolReference *scalarShadow = comp->getSymRefTab()->findOrCreateArrayShadowSymbolRef(elementType, NULL);
       TR::Node::recreate(node, loadOpCode);
       node->setSymbolReference(scalarShadow);
-      node->setAndIncChild(0, aladdNode);
-      node->setNumChildren(1);
 
       for (int i = 1; i < numLanes; i++)
          {
@@ -1061,8 +1073,6 @@ TR::Node *TR_VectorAPIExpansion::transformLoad(TR_VectorAPIExpansion *opt, TR::T
       TR::SymbolReference *vecShadow = comp->getSymRefTab()->findOrCreateArrayShadowSymbolRef(vectorType, NULL);
       TR::Node::recreate(node, TR::vloadi);
       node->setSymbolReference(vecShadow);
-      node->setAndIncChild(0, aladdNode);
-      node->setNumChildren(1);
       }
    
    return node;
@@ -1099,6 +1109,9 @@ TR::Node *TR_VectorAPIExpansion::transformStore(TR_VectorAPIExpansion *opt, TR::
    TR::Node *aladdNode = generateAddressNode(array, arrayIndex, elementSize);
 
    anchorOldChildren(opt, treeTop, node);
+   node->setAndIncChild(0, aladdNode);
+   node->setAndIncChild(1, valueToWrite);
+   node->setNumChildren(2);
    
    if (mode == doScalarization)
       {
@@ -1111,9 +1124,6 @@ TR::Node *TR_VectorAPIExpansion::transformStore(TR_VectorAPIExpansion *opt, TR::
 
       TR::Node::recreate(node, storeOpCode);
       node->setSymbolReference(scalarShadow);
-      node->setAndIncChild(0, aladdNode);
-      node->setChild(1, valueToWrite);
-      node->setNumChildren(2);
 
       for (int i = 1; i < numLanes; i++)
          {
@@ -1134,9 +1144,6 @@ TR::Node *TR_VectorAPIExpansion::transformStore(TR_VectorAPIExpansion *opt, TR::
 
       TR::Node::recreate(node, TR::vstorei);
       node->setSymbolReference(vecShadow);
-      node->setAndIncChild(0, aladdNode);
-      node->setChild(1, valueToWrite);
-      node->setNumChildren(2);
       }
    
    return node;
@@ -1171,9 +1178,6 @@ TR::Node *TR_VectorAPIExpansion::binaryIntrinsicHandler(TR_VectorAPIExpansion *o
 
    TR::Node *firstChild = node->getChild(4);
    TR::Node *secondChild = node->getChild(5);
-
-   node->setChild(0, firstChild);
-   node->setChild(1, secondChild);
 
    return transformBinary(opt, treeTop, node, elementType, vectorLength, mode, firstChild, secondChild, scalarOpCode);
    }
@@ -1225,6 +1229,9 @@ TR::Node *TR_VectorAPIExpansion::transformBinary(TR_VectorAPIExpansion *opt, TR:
    TR::Compilation *comp = opt->comp();
 
    anchorOldChildren(opt, treeTop, node);
+   node->setAndIncChild(0, firstChild);
+   node->setAndIncChild(1, secondChild);
+   node->setNumChildren(2);
    
    if (mode == doScalarization)
       {
@@ -1233,9 +1240,8 @@ TR::Node *TR_VectorAPIExpansion::transformBinary(TR_VectorAPIExpansion *opt, TR:
 
       if (firstChild->getOpCodeValue() == TR::aload) aloadHandler(opt, treeTop, firstChild, elementType, vectorLength, mode);
       if (secondChild->getOpCodeValue() == TR::aload) aloadHandler(opt, treeTop, secondChild, elementType, vectorLength, mode);
-   
+
       TR::Node::recreate(node, opcode);
-      node->setNumChildren(2);
 
       for (int i = 1; i < numLanes; i++)
          {
