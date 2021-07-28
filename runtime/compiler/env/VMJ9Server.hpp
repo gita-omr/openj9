@@ -292,6 +292,7 @@ public:
 
    virtual bool shouldDelayAotLoad() override                                  { return true; }
    virtual bool isStable(int cpIndex, TR_ResolvedMethod *owningMethod, TR::Compilation *comp) override { return false; }
+   virtual bool isForceInline(TR_ResolvedMethod *method) override { return false; }
    virtual bool isClassVisible(TR_OpaqueClassBlock * sourceClass, TR_OpaqueClassBlock * destClass) override;
    virtual bool stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *methodClass) override;
    virtual bool isMethodTracingEnabled(TR_OpaqueMethodBlock *method) override;

@@ -420,6 +420,13 @@ TR_J9InlinerPolicy::alwaysWorthInlining(TR_ResolvedMethod * calleeMethod, TR::No
    else if (length == 15 && !strncmp(className, "sun/misc/Unsafe", 15))
       return true;
 
+   if (comp()->fej9()->isForceInline(calleeMethod))
+      {
+      if (comp()->trace(OMR::inlining))
+         traceMsg(comp(), "@ForceInline was specified for %s\n", calleeMethod->signature(comp()->trMemory()));
+      return true;
+      }
+   
    return false;
    }
 
