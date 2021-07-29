@@ -189,8 +189,8 @@ class TR_VectorAPIExpansion : public TR::Optimization
       TR::SymbolReference *_symRef;
       union
          {
-      TR::SymbolReference *_vecSymRef;
-      TR_Array<TR::SymbolReference*> *_scalarSymRefs;
+         TR::SymbolReference *_vecSymRef;
+         TR_Array<TR::SymbolReference*> *_scalarSymRefs;
          };
       
      /** \brief
@@ -743,7 +743,7 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *      array index node
    *     
    */
-   static TR::Node *transformLoad(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode, TR::Node *array, TR::Node *arrayIndex);
+   static TR::Node *transformLoadFromArray(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode, TR::Node *array, TR::Node *arrayIndex);
 
   /** \brief
    *    Helper method to transform a store to array node
@@ -777,7 +777,7 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *      array index node
    *     
    */
-   static TR::Node *transformStore(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode, TR::Node *valueToWrite, TR::Node *array, TR::Node *arrayIndex);
+   static TR::Node *transformStoreToArray(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode, TR::Node *valueToWrite, TR::Node *array, TR::Node *arrayIndex);
 
 
   /** \brief
