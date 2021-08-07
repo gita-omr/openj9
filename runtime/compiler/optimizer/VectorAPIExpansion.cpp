@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2021, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -71,6 +71,16 @@ TR_VectorAPIExpansion::returnsVector(TR::MethodSymbol * methodSymbol)
    TR::RecognizedMethod index = methodSymbol->getRecognizedMethod();
 
    return methodTable[index - _firstMethod]._returnType == Vector;
+   }
+
+TR::DataType
+TR_VectorAPIExpansion::dataType(TR::MethodSymbol * methodSymbol)
+   {
+   if (!isVectorAPIMethod(methodSymbol)) return TR::NoType;
+       
+   TR::RecognizedMethod index = methodSymbol->getRecognizedMethod();
+
+   return methodTable[index - _firstMethod]._elementType;
    }
 
 bool
@@ -158,19 +168,19 @@ TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node)
 
    if (opCodeValue == TR::astore || opCodeValue == TR::astorei)
       {
-      TR::Node *rhs = (opCodeValue == TR::astore) ? node->getFirstChild() : node->getSecondChild();
-
-      if (!node->chkStoredValueIsIrrelevant() &&
-          (rhs->getOpCodeValue() == TR::aconst ||
-           rhs->getOpCodeValue() == TR::aRegLoad))
+      if (!node->chkStoredValueIsIrrelevant())
          {
-         if (_trace)
-            traceMsg(comp(), "Invalidating #%p due to rhs %p in node %p\n", node->getSymbolReference()->getReferenceNumber(), rhs, node);
-         invalidateSymRef(node->getSymbolReference());
-         }
-      else if (!node->chkStoredValueIsIrrelevant())
-         {
-         alias(node, rhs);
+         TR::Node *rhs = (opCodeValue == TR::astore) ? node->getFirstChild() : node->getSecondChild();
+         if (rhs->getOpCode().hasSymbolReference())
+            {
+            alias(node, rhs);
+            }
+         else
+            {
+            if (_trace)
+               traceMsg(comp(), "Invalidating #%p due to rhs %p in node %p\n", node->getSymbolReference()->getReferenceNumber(), rhs, node);
+            invalidateSymRef(node->getSymbolReference());
+            }
          }
       }
    else if (opCode.isFunctionCall())
@@ -186,17 +196,12 @@ TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node)
          {
          if (!isVectorAPIMethod(methodSymbol) || isArgType(methodSymbol, i, Vector))
             {
-            // Alias first
             TR::Node *child = node->getChild(i);
-            if (child->getOpCodeValue() == TR::aload || 
-                child->getOpCodeValue() == TR::aloadi ||
-                child->getOpCodeValue() == TR::acall ||
-                child->getOpCodeValue() == TR::acalli)
+            if (child->getOpCode().hasSymbolReference())
                {
                alias(node, child);
                }
-            else if (child->getOpCodeValue() == TR::aconst ||
-                     child->getOpCodeValue() == TR::aRegLoad)
+            else
                {
                if (_trace)
                   traceMsg(comp(), "Invalidating #%d due to child %p in node %p\n",
@@ -249,7 +254,9 @@ TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node)
                traceMsg(comp(), "%snode n%dn (#%d) was updated with vecLen : %d\n",
                             OPT_DETAILS_VECTOR, node->getGlobalIndex(), methodRefNum, speciesLen);
 
-            // TODO: update methodElementType and methodNumLanes
+            methodElementType = dataType(methodSymbol);
+            int32_t elementSize = OMR::DataType::getSize(methodElementType);
+            methodNumLanes = speciesLen/8/elementSize;
             }
          else if (isArgType(methodSymbol, i, elementType))
             {
@@ -309,12 +316,25 @@ TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node)
          invalidateSymRef(child->getSymbolReference());
          }
       }
+   else
+      {
+      for (int32_t i = 0; i < node->getNumChildren(); i++)
+         {
+         TR::Node *child = node->getChild(i);
+         if (child->getOpCode().hasSymbolReference())
+            {
+            if (_trace)
+               traceMsg(comp(), "Invalidating #%d since it's used by unsupported node %p\n",
+                                 child->getSymbolReference()->getReferenceNumber(), node);
+             invalidateSymRef(child->getSymbolReference());
+            }
+         }
+      }
 
-      
    for (int32_t i = 0; i < node->getNumChildren(); i++)
-       {
-       visitNodeToBuildVectorAliases(node->getChild(i));
-       }
+      {
+      visitNodeToBuildVectorAliases(node->getChild(i));
+      }
    }
 
 
@@ -668,6 +688,8 @@ TR_VectorAPIExpansion::expandVectorAPI()
          {
          _seenClasses.set(classId);
 
+         //printf("Expanding class %d in %s\n", classId, comp()->signature());
+
          if (!performTransformation(comp(), "%s Starting to transform class #%d\n", optDetailString(), classId))
             {
             _aliasTable[classId]._classId = -1; // invalidate the whole class
@@ -732,7 +754,8 @@ TR_VectorAPIExpansion::expandVectorAPI()
          }
       }
 
-   comp()->dumpMethodTrees("After Vectorization");
+   if (_trace)
+      comp()->dumpMethodTrees("After Vectorization");
 
    return 1;
    }
@@ -772,6 +795,9 @@ TR_VectorAPIExpansion::scalarizeLoadOrStore(TR_VectorAPIExpansion *opt, TR::Node
    TR::Compilation *comp = opt->comp();
    
    TR_ASSERT_FATAL(node->getOpCode().hasSymbolReference(), "%s node %p should have symbol reference", OPT_DETAILS_VECTOR, node);
+
+   if (elementType == TR::Int8 || elementType == TR::Int16)
+      elementType = TR::Int32;
    
    TR::SymbolReference *nodeSymRef = node->getSymbolReference();
    TR_Array<TR::SymbolReference*> *scalarSymRefs = (opt->_aliasTable)[nodeSymRef->getReferenceNumber()]._scalarSymRefs;
@@ -1063,7 +1089,7 @@ TR::Node *TR_VectorAPIExpansion::transformLoadFromArray(TR_VectorAPIExpansion *o
       // keep Byte and Short as Int after it's loaded from array
       if (elementType == TR::Int8 || elementType == TR::Int16)
          {
-         TR::Node *newLoadNode = node->duplicateTree();
+         TR::Node *newLoadNode = node->duplicateTree(false);
          TR::Node::recreate(node, elementType == TR::Int8 ? TR::b2i : TR::s2i);
          node->setAndIncChild(0, newLoadNode);
          }
@@ -1323,7 +1349,7 @@ TR_VectorAPIExpansion::methodTable[] =
 
 //TODOs:
 // 1) disable inlining of recognized intrinsics
-// 2) add disable and trace options
+// 2) add disable and trace command line options
 // 3) enable inlining of all vector methods
 // 4) handle OSR guards
 // 5) make scalarization and vectorization per web
@@ -1339,7 +1365,7 @@ TR_VectorAPIExpansion::methodTable[] =
 // 15) OPT: too many aliased temps (reused privatized args) that cause over-aliasing after GVP
 // 16) OPT: add to other opt levels
 // 17) OPT: second pass of GVP still needed to propagate opcode
-// 18) OPT: jdk/incubator/vector/VectorOperators.opCode() is not inlined with Long add
+// 18) OPT: jdk/incubator/vector/VectorOperators.opCode() is not inlined with Byte,Short,Long add
 // 19) OPT: don't insert OSR guards for intrinsics
 // 20) Fix TR_ALLOC
 

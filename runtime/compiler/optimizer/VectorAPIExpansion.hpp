@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2021, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -265,6 +265,17 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *     \c false otherwise
    */
    bool returnsVector(TR::MethodSymbol * methodSymbol);
+
+  /** \brief
+   *     Returns the vector element type on which method operates
+   *
+   *  \param methodSymbol
+   *     Method symbol
+   *
+   *  \return 
+   *     TR::DataType
+   */
+   TR::DataType dataType(TR::MethodSymbol * methodSymbol);
 
   /** \brief
    *     Checks if method's argument is one the \c vapiArgType types
