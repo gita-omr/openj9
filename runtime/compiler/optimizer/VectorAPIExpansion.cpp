@@ -40,9 +40,8 @@ TR_VectorAPIExpansion::optDetailString() const throw()
 int32_t
 TR_VectorAPIExpansion::perform()
    {
-   // TODO: add command line options after openj9 PR is merged
-   static bool disableVectorAPIExpansion = feGetEnv("TR_disableVectorAPIExpansion") ? true : false;
-   static bool traceVectorAPIExpansion = feGetEnv("TR_traceVectorAPIExpansion") ? true : false;
+   bool disableVectorAPIExpansion = comp()->getOption(TR_DisableVectorAPIExpansion);
+   bool traceVectorAPIExpansion = comp()->getOption(TR_TraceVectorAPIExpansion);
 
    _trace = traceVectorAPIExpansion;
    
