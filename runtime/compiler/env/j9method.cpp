@@ -288,11 +288,8 @@ bool TR_ResolvedJ9Method::isMethodInValidLibrary()
    if (!strncmp(this->convertToMethod()->classNameChars(), "com/ibm/gpu/Kernel", 18))
       return true;
 
-   if (!strncmp(this->convertToMethod()->classNameChars(), "jdk/incubator/vector/FloatVector", 32))
+   if (!strncmp(this->convertToMethod()->classNameChars(), "jdk/incubator/vector/", 21))
       return true;
-   if (!strncmp(this->convertToMethod()->classNameChars(), "jdk/incubator/vector/VectorSpecies", 34))
-      return true;
-
    
 #ifdef J9VM_OPT_JAVA_CRYPTO_ACCELERATION
    // For IBMJCE Crypto
