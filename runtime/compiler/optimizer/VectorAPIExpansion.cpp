@@ -291,7 +291,7 @@ TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node)
          {
          if (_trace)
             traceMsg(comp(), "Invalidating #%d due to unsupported elementType=%d, numLanes=%d, or opcode in node %p\n",
-                     node->getSymbolReference()->getReferenceNumber(), methodElementType, methodNumLanes, node);
+                     node->getSymbolReference()->getReferenceNumber(), (int)methodElementType, methodNumLanes, node);
          invalidateSymRef(node->getSymbolReference());
          }
       }
@@ -427,7 +427,7 @@ TR_VectorAPIExpansion::getVectorSizeFromVectorSpecies(TR::Node *vectorSpeciesNod
          uintptr_t vectorSpeciesLocation = comp()->getKnownObjectTable()->getPointer(vSpeciesSymRef->getKnownObjectIndex());
          uintptr_t vectorShapeLocation = fej9->getReferenceField(vectorSpeciesLocation, "vectorShape", "Ljdk/incubator/vector/VectorShape;");
          int vectorBitSize = fej9->getInt32Field(vectorShapeLocation, "vectorBitSize");
-         return vec_sz_t{vectorBitSize};
+         return (vec_sz_t)vectorBitSize;
          }
       }
       return vec_len_unknown;
@@ -556,7 +556,7 @@ TR_VectorAPIExpansion::validateSymRef(int32_t id, int32_t i, vec_sz_t &classLeng
          {
          if (_trace)
             traceMsg(comp(), "%s invalidating6 class #%d due to symref #%d method type %d, seen type %d\n",
-                             OPT_DETAILS_VECTOR, id, i, methodType, classType);
+                     OPT_DETAILS_VECTOR, id, i, (int)methodType, (int)classType);
          return false;
          }
       }
