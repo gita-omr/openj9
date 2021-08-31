@@ -214,6 +214,11 @@ TR_J9InlinerPolicy::inlineRecognizedMethod(TR::RecognizedMethod method)
        method < TR::Last_vector_api_method)
       {
       comp()->getMethodSymbol()->setHasVectorAPI(true);
+
+      // Do not inline vector intrinsics
+      if (method <= TR::Last_vector_api_intrinsic_method &&
+          !comp()->getOption(TR_DisableVectorAPIExpansion))
+         return false;
       }
 
 //    if (method ==
