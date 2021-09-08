@@ -439,7 +439,7 @@ TR_J9InlinerPolicy::alwaysWorthInlining(TR_ResolvedMethod * calleeMethod, TR::No
    if (length >= 21 && !strncmp(className, "jdk/incubator/vector/", 21))
        vectorMethod = true;
 
-   if (vectorMethod &&
+   if (/*vectorMethod &&*/
        !comp()->getOption(TR_DisableForceInlineAnnotations) &&
        comp()->fej9()->isForceInline(calleeMethod))
       {
@@ -2203,7 +2203,7 @@ TR_J9InlinerPolicy::tryToInline(TR_CallTarget * calltarget, TR_CallStack * callS
       if (length >= 21 && !strncmp(className, "jdk/incubator/vector/", 21))
          vectorMethod = true;
 
-      if (vectorMethod &&
+      if (/*vectorMethod &&*/
           !comp()->getOption(TR_DisableForceInlineAnnotations) &&
           comp()->fej9()->isForceInline(method))
          {
