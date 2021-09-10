@@ -471,7 +471,6 @@ TR_VectorAPIExpansion::getVectorSizeFromVectorSpecies(TR::Node *vectorSpeciesNod
       return vec_len_unknown;
    }
 
-
 TR::DataType
 TR_VectorAPIExpansion::getDataTypeFromClassNode(TR::Node *classNode)
    {
@@ -480,10 +479,12 @@ TR_VectorAPIExpansion::getDataTypeFromClassNode(TR::Node *classNode)
       {
       if (symRef->hasKnownObjectIndex())
          {
-         TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp()->fe());
+         TR::Compilation *comp = TR::comp();
+         TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
+
          TR::VMAccessCriticalSection getDataTypeFromClassNodeSection(fej9);
 
-         uintptr_t javaLangClass = comp()->getKnownObjectTable()->getPointer(symRef->getKnownObjectIndex());
+         uintptr_t javaLangClass = comp->getKnownObjectTable()->getPointer(symRef->getKnownObjectIndex());
          J9Class *j9class = (J9Class *)(intptr_t)fej9->getInt64Field(javaLangClass, "vmRef");
          J9JavaVM *vm = fej9->getJ9JITConfig()->javaVM;
 
@@ -1392,16 +1393,17 @@ TR::Node *TR_VectorAPIExpansion::transformBinary(TR_VectorAPIExpansion *opt, TR:
    {
    TR::Compilation *comp = opt->comp();
 
-   anchorOldChildren(opt, treeTop, node);
-
    if (mode == doScalarization)
       {
+      anchorOldChildren(opt, treeTop, node);
+
       int32_t elementSize = OMR::DataType::getSize(elementType);
       int numLanes = vectorLength/8/elementSize;
 
       if (firstChild->getOpCodeValue() == TR::aload) aloadHandler(opt, treeTop, firstChild, elementType, vectorLength, mode);
       if (secondChild->getOpCodeValue() == TR::aload) aloadHandler(opt, treeTop, secondChild, elementType, vectorLength, mode);
 
+      anchorOldChildren(opt, treeTop, node);
       node->setAndIncChild(0, firstChild);
       node->setAndIncChild(1, secondChild);
       node->setNumChildren(2);
@@ -1424,8 +1426,11 @@ TR::Node *TR_VectorAPIExpansion::transformBinary(TR_VectorAPIExpansion *opt, TR:
 
       TR::ILOpCodes vectorOpCode = TR::ILOpCode::convertScalarToVector(scalarOpCode);
 
-      if (vectorOpCode != TR::BadILOp)
+      static bool useVcall = (feGetEnv("TR_UseVcall") != NULL);
+
+      if (vectorOpCode != TR::BadILOp && !useVcall)
          {
+         anchorOldChildren(opt, treeTop, node);
          node->setAndIncChild(0, firstChild);
          node->setAndIncChild(1, secondChild);
          node->setNumChildren(2);
