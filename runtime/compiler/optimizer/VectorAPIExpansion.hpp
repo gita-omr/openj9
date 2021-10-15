@@ -252,10 +252,13 @@ class TR_VectorAPIExpansion : public TR::Optimization
     *     \c true if it finds any methods,
     *     \c false otherwise
     */
-   bool findVectorMethods();
+   static bool findVectorMethods(bool trace);
 
   /** \brief
    *     The method that does the final transformation
+   *
+   *  \param trace
+   *     Perform tracing
    *
    */
    int32_t expandVectorAPI();
@@ -270,7 +273,7 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *     \c true if \c methodSymbol is a recognized Vector API method(high level or intrinsic),
    *     \c false otherwise
    */
-   bool isVectorAPIMethod(TR::MethodSymbol * methodSymbol);
+   static bool isVectorAPIMethod(TR::MethodSymbol * methodSymbol);
 
   /** \brief
    *     Checks if methodSymbol returns Vector object
