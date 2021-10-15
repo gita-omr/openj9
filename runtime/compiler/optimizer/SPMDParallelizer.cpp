@@ -1448,7 +1448,8 @@ bool TR_SPMDKernelParallelizer::processSPMDKernelLoopForSIMDize(TR::Compilation 
    if (iters > 0 && !(iters % unrollCount))
       unroller._spillLoopRequired = false;
 
-   traceMsg(comp, "   Checking Loop ==== (iter = %d, unroll = %d, vectorSize = %d) and unroller._spillLoopRequired %d \n", iters, unrollCount, vectorSize, unroller._spillLoopRequired);
+   if (trace())
+      traceMsg(comp, "   Checking Loop ==== (iter = %d, unroll = %d, vectorSize = %d) and unroller._spillLoopRequired %d \n", iters, unrollCount, vectorSize, unroller._spillLoopRequired);
 
    TR::Block *origFallthruBlock = branchBlock->getExit()->getNextTreeTop()->getNode()->getBlock();
 
@@ -1532,7 +1533,8 @@ bool TR_SPMDKernelParallelizer::processSPMDKernelLoopForSIMDize(TR::Compilation 
          if (curNode->getOpCodeValue() == TR::istore && curNode->getSymbolReference() == unroller._piv->getSymRef())
             {
             // increment of PIV
-            traceMsg(comp, "Reducing the number of iterations of the loop %d at storeNode [%p] by vector length %d \n",loop->getNumber(), curNode, unrollCount);
+            if (trace())
+               traceMsg(comp, "Reducing the number of iterations of the loop %d at storeNode [%p] by vector length %d \n",loop->getNumber(), curNode, unrollCount);
             TR_ASSERT_FATAL(curNode->getFirstChild()->getOpCode().isAdd() || curNode->getFirstChild()->getOpCode().isSub(), "PIV increment should be simple (either by add or by sub");
             TR_ASSERT_FATAL(curNode->getFirstChild()->getFirstChild()->getOpCode().isLoad(), "PIV increment should have load");
             TR_ASSERT_FATAL(curNode->getFirstChild()->getSecondChild()->getOpCode().isLoadConst(), "PIV increment should have const increment value");
@@ -1658,7 +1660,7 @@ int32_t TR_SPMDKernelParallelizer::findArrayElementSize(TR::Node *node)
    TR_UseDefInfo::BitVector defs(comp()->allocator());
    useDefInfo->getUseDef(defs, useIndex);
 
-   if (defs.PopulationCount() > 1)
+   if (defs.PopulationCount() > 1 && trace())
        traceMsg(comp(), "More than one def for node %p\n", node);
 
    if (!defs.IsZero() && (defs.PopulationCount() == 1))
@@ -1675,8 +1677,9 @@ int32_t TR_SPMDKernelParallelizer::findArrayElementSize(TR::Node *node)
          // GPU_TODO: handle newarray
          if (!defNode->getOpCode().isStoreDirect())
             return -1;
-
-         traceMsg(comp(), "found def node %p\n", defNode);
+         
+         if (trace())
+            traceMsg(comp(), "found def node %p\n", defNode);
 
          if (defNode->getFirstChild()->getOpCode().isLoadIndirect() ||
                (defNode->getFirstChild()->getOpCode().isLoad() &&
@@ -1705,9 +1708,10 @@ void TR_SPMDKernelParallelizer::convertIntoParm(TR::Node *node, int32_t elementS
 
 void TR_SPMDKernelParallelizer::reportRejected(const char *msg1, const char *msg2,  int32_t lineNumber, TR::Node *node)
    {
-   traceMsg(comp(), msg1, node);
+   if (trace())
+      traceMsg(comp(), msg1, node);
 
-   if (msg2)
+   if (trace() && msg2)
       {
       traceMsg(comp(), msg2, comp()->signature(), lineNumber, comp()->getLineNumber(node));
       traceMsg(comp(), "\n");
@@ -1789,7 +1793,8 @@ bool TR_SPMDKernelParallelizer::visitNodeToMapSymbols(TR::Node *node,
             {
             if (!comp()->cg()->_gpuSymbolMap[hostSymRef->getReferenceNumber()]._hostSymRef)
                {
-               traceMsg(comp(), "Adding node %p into auto list\n", node);
+               if (trace())
+                  traceMsg(comp(), "Adding node %p into auto list\n", node);
 
                autos.add((TR::AutomaticSymbol *)hostSymRef->getSymbol());
 
@@ -1926,7 +1931,9 @@ bool TR_SPMDKernelParallelizer::visitNodeToDetectArrayAccesses(TR::Node *node,
                if (opcode.isLoadVar() || opcode.getOpCodeValue() == TR::arraylength ||
                    (opcode.getOpCodeValue() == TR::arraycopy && childNum == childrenNodeOffset))
                   {
-                  traceMsg(comp(), "Node[%p]: addrNode[%p], #%d, READ\n", node, addrNode, symRefIndex);
+                  if (trace > 1)
+                     traceMsg(comp(), "Node[%p]: addrNode[%p], #%d, READ\n", node, addrNode, symRefIndex);
+                  
                   gpuSymbolMap[nc]._accessKind |= TR::CodeGenerator::ReadAccess;
 
                   if (!disableDataTransferElimination)
@@ -1940,9 +1947,13 @@ bool TR_SPMDKernelParallelizer::visitNodeToDetectArrayAccesses(TR::Node *node,
 
                         int32_t pivStride = INVALID_STRIDE;
                         bool affine = isAffineAccess(comp(), addrExpr, loop, piv->getSymRef(), pivStride);
-                        traceMsg(comp(), "RHS node %p has stride %d with regards to #%d, isAffine=%s\n", addrExpr, pivStride, piv->getSymRef()->getReferenceNumber(), affine ? "T":"F");
-                        traceMsg(comp(), "gpuSymbolMap[%d]._elementSize=%d\n", nc, gpuSymbolMap[nc]._elementSize);
 
+                        if (trace > 1)
+                           {
+                           traceMsg(comp(), "RHS node %p has stride %d with regards to #%d, isAffine=%s\n", addrExpr, pivStride, piv->getSymRef()->getReferenceNumber(), affine ? "T":"F");
+                           traceMsg(comp(), "gpuSymbolMap[%d]._elementSize=%d\n", nc, gpuSymbolMap[nc]._elementSize);
+                           }
+                        
                         //TODO: currently excludes some cases that would work. Need to expand in the future.
                         if ((pivStride != INVALID_STRIDE) && (pivStride > 0))
                            {
@@ -3998,7 +4009,8 @@ bool TR_SPMDKernelParallelizer::isPerfectNest(TR_RegionStructure *region, TR::Co
 
 bool TR_SPMDKernelParallelizer::checkDataLocality(TR_RegionStructure *loop, CS2::ArrayOf<TR::Node *, TR::Allocator> &useNodesOfDefsInLoop, SharedSparseBitVector &defsInLoop, TR::Compilation *comp, TR_UseDefInfo *useDefInfo, TR_HashTab* reductionHashTab)
    {
-   traceMsg(comp, "Checking data locality in loop %d piv = %d\n", loop->getNumber(), loop->getPrimaryInductionVariable()->getSymRef()->getReferenceNumber());
+   if (trace())
+      traceMsg(comp, "Checking data locality in loop %d piv = %d\n", loop->getNumber(), loop->getPrimaryInductionVariable()->getSymRef()->getReferenceNumber());
 
    for (int32_t idx = 0; idx < _pivList.NumberOfElements(); idx++)
       {

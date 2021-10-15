@@ -210,6 +210,10 @@ bool
 TR_J9InlinerPolicy::inlineRecognizedMethod(TR::RecognizedMethod method)
    {
 
+
+  if (!strncmp(method->classNameChars(), "jdk/incubator/vector/", 21))
+      comp()->getMethodSymbol()->setHasVectorAPI(true);
+
    if (method >= TR::FirstVectorMethod &&
        method <= TR::LastVectorMethod)
       {
