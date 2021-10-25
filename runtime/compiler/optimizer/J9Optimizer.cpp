@@ -541,6 +541,15 @@ const OptimizationStrategy scorchingStrategyOpts[] =
    { OMR::blockSplitter,                         OMR::IfNews      }, // treeSimplification + blockSplitter + VP => opportunity for EA
    { OMR::arrayPrivatizationGroup,               OMR::IfNews      }, // must precede escape analysis
    { OMR::veryExpensiveGlobalValuePropagationGroup           },
+
+#if 0 
+   { OMR::globalDeadStoreElimination,            OMR::IfVectorAPI               }, // global dead store removal
+   { OMR::deadTreesElimination,                  OMR::IfVectorAPI               }, // cleanup after dead store removal
+   { OMR::globalCopyPropagation,                 OMR::IfVectorAPI       },  // GITA ???
+   { OMR::localCSE,                              OMR::IfVectorAPI },
+   { OMR::vectorAPIExpansion,                    OMR::IfVectorAPI               },
+#endif   
+
    { OMR::dataAccessAccelerator                              }, //always run after GVP
    { OMR::osrGuardRemoval,                       OMR::IfEnabled }, // run after calls/monents/asyncchecks have been removed
    { OMR::globalDeadStoreGroup,                              },
@@ -581,9 +590,18 @@ const OptimizationStrategy scorchingStrategyOpts[] =
    { OMR::localValuePropagation,                 OMR::MarkLastRun              },
    { OMR::arraycopyTransformation      },
    { OMR::checkcastAndProfiledGuardCoalescer      },
+
+#if 1 
    { OMR::globalDeadStoreElimination,            OMR::IfVectorAPI               }, // global dead store removal
    { OMR::deadTreesElimination,                  OMR::IfVectorAPI               }, // cleanup after dead store removal
    { OMR::vectorAPIExpansion,                    OMR::IfVectorAPI               },
+   { OMR::globalDeadStoreElimination,            OMR::IfVectorAPI               }, // global dead store removal
+   { OMR::deadTreesElimination,                  OMR::IfVectorAPI               }, // cleanup after dead store removal
+   { OMR::inductionVariableAnalysis,             OMR::IfLoops     },
+   { OMR::loopSpecializerGroup,                  OMR::IfLoops     },
+   { OMR::inductionVariableAnalysis,             OMR::IfLoops     },
+#endif   
+
    { OMR::tacticalGlobalRegisterAllocatorGroup,  OMR::IfEnabled   },
    { OMR::jProfilingValue,                           OMR::MustBeDone                 },
    { OMR::treeLowering,                              OMR::MustBeDone                 },
