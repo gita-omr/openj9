@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,7 +36,8 @@
 
 J9::KnownObjectTable::KnownObjectTable(TR::Compilation *comp) :
       OMR::KnownObjectTableConnector(comp),
-   _references(comp->trMemory())
+      _references(comp->trMemory()),
+      _stableArrayRanks(comp->trMemory())
    {
    _references.add(NULL); // Reserve index zero for NULL
    }
@@ -113,7 +114,6 @@ J9::KnownObjectTable::getOrCreateIndex(uintptr_t objectPointer)
    return nextIndex;
    }
 
-
 TR::KnownObjectTable::Index
 J9::KnownObjectTable::getOrCreateIndex(uintptr_t objectPointer, bool isArrayWithConstantElements)
    {
@@ -122,6 +122,7 @@ J9::KnownObjectTable::getOrCreateIndex(uintptr_t objectPointer, bool isArrayWith
       {
       self()->addArrayWithConstantElements(index);
       }
+
    return index;
    }
 
@@ -158,6 +159,7 @@ J9::KnownObjectTable::getOrCreateIndexAt(uintptr_t *objectReferenceLocation, boo
    Index result = self()->getOrCreateIndexAt(objectReferenceLocation);
    if (isArrayWithConstantElements)
       self()->addArrayWithConstantElements(result);
+
    return result;
    }
 
@@ -450,7 +452,8 @@ J9::KnownObjectTable::dumpTo(TR::FILE *file, TR::Compilation *comp)
                uintptr_t *ref = self()->getPointerLocation(i);
                int32_t len; char *className = TR::Compiler->cls.classNameChars(comp, j9fe->getObjectClass(*ref), len);
                int32_t hashCode = mmf->j9gc_objaccess_getObjectHashCode(jitConfig->javaVM, (J9Object*)(*ref));
-               trfprintf(file, "   %p   %p %8x   %.*s\n", ref, *ref, hashCode, len, className);
+               trfprintf(file, "   %p   %p %8x   %.*s %s\n", ref, *ref, hashCode, len, className,
+                         isArrayWithStableElements(i) ? "(stable array)" : "");
                }
             }
          trfprintf(file, "</knownObjectTable>\n");
@@ -514,4 +517,24 @@ J9::KnownObjectTable::dumpTo(TR::FILE *file, TR::Compilation *comp)
          trfprintf(file, "<knownObjectTable size=\"%d\"/> // unable to acquire VM access to print table contents\n", endIndex);
          }
       }
+   }
+
+
+void
+J9::KnownObjectTable::addStableArray(uintptr_t *objectReferenceLocation, int32_t stableArrayRank)
+   {
+   Index result = self()->getOrCreateIndexAt(objectReferenceLocation);
+ 
+   if (_stableArrayRanks[result] < stableArrayRank)
+      {
+      _stableArrayRanks[result] = stableArrayRank;
+      }
+   }
+
+bool
+J9::KnownObjectTable::isArrayWithStableElements(Index index)
+   {
+   TR_ASSERT_FATAL(index != UNKNOWN && 0 <= index && index < self()->getEndIndex(), "isArrayWithStableElements(%d): index must be in range 0..%d", index, self()->getEndIndex());
+
+   return (index < _stableArrayRanks.size() && _stableArrayRanks[index] > 0);
    }

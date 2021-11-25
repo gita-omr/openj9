@@ -75,6 +75,8 @@ class OMR_EXTENSIBLE KnownObjectTable : public OMR::KnownObjectTableConnector
    friend class ::TR_J9VMBase;
    friend class Compilation;
    TR_Array<uintptr_t*> _references;
+   TR_Array<int32_t> _stableArrayRanks;
+
 
 public:
    TR_ALLOC(TR_Memory::FrontEnd);
@@ -85,14 +87,14 @@ public:
 
    Index getEndIndex();
    Index getOrCreateIndex(uintptr_t objectPointer);
-   Index getOrCreateIndex(uintptr_t objectPointer, bool isArrayWithConstantElements);
+   Index getOrCreateIndex(uintptr_t objectPointer, bool isArrayWithConstantElements, int32_t stableArrayRank);
    uintptr_t *getPointerLocation(Index index);
    bool isNull(Index index);
 
    void dumpTo(TR::FILE *file, TR::Compilation *comp);
 
    Index getOrCreateIndexAt(uintptr_t *objectReferenceLocation);
-   Index getOrCreateIndexAt(uintptr_t *objectReferenceLocation, bool isArrayWithConstantElements);
+   Index getOrCreateIndexAt(uintptr_t *objectReferenceLocation, bool isArrayWithConstantElements, int32_t stableArrayRank);
    Index getExistingIndexAt(uintptr_t *objectReferenceLocation);
 
    uintptr_t getPointer(Index index);
@@ -101,6 +103,9 @@ public:
    void updateKnownObjectTableAtServer(Index index, uintptr_t *objectReferenceLocationClient);
    void getKnownObjectTableDumpInfo(std::vector<TR_KnownObjectTableDumpInfo> &knotDumpInfoList);
 #endif /* defined(J9VM_OPT_JITSERVER) */
+
+   void addStableArray(Index index, int32_t stableArrayRank)
+   bool isArrayWithStableElements(Index index);
 
 private:
 
