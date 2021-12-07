@@ -350,6 +350,11 @@ TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node)
          invalidateSymRef(child->getSymbolReference());
          }
       }
+   else if (node->getOpCodeValue() == TR::checkcast ||
+            node->getOpCodeValue() == TR::NULLCHK)
+      {
+      // ignore for now and check the children
+      }
    else
       {
       for (int32_t i = 0; i < node->getNumChildren(); i++)
@@ -704,6 +709,28 @@ TR_VectorAPIExpansion::expandVectorAPI()
       TR::Node *parent = NULL;
       TR::MethodSymbol *methodSymbol = NULL;
 
+
+      // remove unnecessary checkcast and NULLCHK as soon as possible
+      if (node->getOpCodeValue() == TR::checkcast ||
+         node->getOpCodeValue() == TR::NULLCHK)
+         {
+         TR::Node *firstChild = node->getFirstChild();
+         if (firstChild->getOpCodeValue() == TR::PassThrough)
+            firstChild = firstChild->getFirstChild();
+            
+         if (firstChild->getOpCode().hasSymbolReference())
+            {
+            int32_t childClassId = _aliasTable[firstChild->getSymbolReference()->getReferenceNumber()]._classId;
+            if (childClassId > 0)
+               {
+               // can be removed since the child will be scalarized or vectorized
+               TR::Node::recreate(node, TR::treetop);
+               }
+            }
+         continue;
+         }
+
+      
       if (opCodeValue == TR::treetop || opCodeValue == TR::NULLCHK)
           {
           parent = node;
