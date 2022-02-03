@@ -118,6 +118,14 @@ class TR_VectorAPIExpansion : public TR::Optimization
    static int32_t const VECTOR_OP_CAST        = 17;
    static int32_t const VECTOR_OP_REINTERPRET = 18;
 
+   // Compare
+   static int32_t const BT_eq = 0;
+   static int32_t const BT_ne = 4;
+   static int32_t const BT_le = 5;
+   static int32_t const BT_ge = 7;
+   static int32_t const BT_lt = 3;
+   static int32_t const BT_gt = 1;
+
   /** \brief
    *  Is passed to methods handlers during analysis and transforamtion phases
    *
@@ -782,6 +790,33 @@ class TR_VectorAPIExpansion : public TR::Optimization
    */
    static TR::Node *naryIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode, int32_t numChidren);
 
+  /** \brief
+   *    Scalarizes or vectorizes a node that is a call to \c VectorSupport.blend() intrinsic.
+   *    In both cases, the node is modified in place.
+   *    In the case of scalarization, extra nodes are created(number of lanes minus one)
+   *
+   *   \param opt
+   *      This optimization object
+   *
+   *   \param treeTop
+   *      Tree top of the \c node
+   *
+   *   \param node
+   *      Node to transform
+   *
+   *   \param elementType
+   *      Element type
+   *
+   *   \param vectorLength
+   *      Full vector length in bits (e.g. 128 for Float128Vector)
+   *
+   *   \param mode
+   *      Handler mode
+   *
+   *   \return
+   *      Transformed node
+   */
+   static TR::Node *blendIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode);
 
   /** \brief
    *    Scalarizes or vectorizes a node that is a call to \c VectorSupport.broadcastCoerced() intrinsic.
@@ -810,6 +845,34 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *      Transformed node
    */
    static TR::Node *broadcastCoercedIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode);
+
+  /** \brief
+   *    Scalarizes or vectorizes a node that is a call to \c VectorSupport.compare() intrinsic.
+   *    In both cases, the node is modified in place.
+   *    In the case of scalarization, extra nodes are created(number of lanes minus one)
+   *
+   *   \param opt
+   *      This optimization object
+   *
+   *   \param treeTop
+   *      Tree top of the \c node
+   *
+   *   \param node
+   *      Node to transform
+   *
+   *   \param elementType
+   *      Element type
+   *
+   *   \param vectorLength
+   *      Full vector length in bits (e.g. 128 for Float128Vector)
+   *
+   *   \param mode
+   *      Handler mode
+   *
+   *   \return
+   *      Transformed node
+   */
+   static TR::Node *compareIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode);
 
 
   /** \brief
