@@ -459,7 +459,7 @@ class TR_VectorAPIExpansion : public TR::Optimization
 
 
   /** \brief
-   *     Maps Vector API opcode enum into TR::ILOpCodes
+   *     Maps Vector API opcode enum into scalar or vector TR::ILOpCodes
    *
    *  \param vectorOpCode
    *     Vector API opcode enum
@@ -467,10 +467,16 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *  \param elementType
    *     Element type
    *
+   *  \param scalar
+   *     return scalar opcode
+   *
+   *  \param compare
+   *     true if it's compare opcode
+   *
    *  \return
-   *     TR::IL opcode
+   *     scalar TR::IL opcode if scalar is true, otherwise vector opcode
    */
-   static TR::ILOpCodes ILOpcodeFromVectorAPIOpcode(int32_t vectorOpCode, TR::DataType elementType);
+   static TR::ILOpCodes ILOpcodeFromVectorAPIOpcode(int32_t vectorOpCode, TR::DataType elementType, bool scalar, bool compare = false);
 
   /** \brief
    *    For the node's symbol reference, creates and records(if it does not exist yet)
@@ -1056,8 +1062,11 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *   \param mode
    *      Handler mode
    *
-   *   \param opcode
-   *      Opcode
+   *   \param scalarOpCode
+   *      Scalar Opcode
+   *
+   *   \param vectorOpCode
+   *      Vector Opcode
    *
    *   \param firstOperand
    *      Child index of the first operand
@@ -1071,7 +1080,7 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *   \return
    *      Transformed node
    */
-   static TR::Node *transformNary(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode, TR::ILOpCodes opcode, int32_t firstOperand, int32_t numOperands, bool useVcall);
+   static TR::Node *transformNary(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode, TR::ILOpCodes scalarOpCode, TR::ILOpCodes vectorOpCode, int32_t firstOperand, int32_t numOperands, bool useVcall);
 
 
   /** \brief
