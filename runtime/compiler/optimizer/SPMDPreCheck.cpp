@@ -27,7 +27,7 @@
 #include "il/Node_inlines.hpp"
 #include "codegen/CodeGenerator.hpp"
 
-#define VECTOR_LENGTH 128
+#define VECTOR_LENGTH TR::VectorLength128
 
 bool SPMDPreCheck::isSPMDCandidate(TR::Compilation *comp, TR_RegionStructure *loop)
    {

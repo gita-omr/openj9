@@ -82,7 +82,7 @@
 
 #define INVALID_STRIDE INT_MAX
 #define VECTOR_SIZE 16
-#define VECTOR_LENGTH 128
+#define VECTOR_LENGTH TR::VectorLength128
 #define INVALID_ADDR  (TR::Node *)-1
 
 namespace TR { class OptimizationManager; }
