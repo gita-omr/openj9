@@ -310,8 +310,8 @@ static int32_t numberOfRegisterCandidate(TR::CodeGenerator *cg, TR::Node *depNod
  */
 extern void TEMPORARY_initJ9PPCTreeEvaluatorTable(TR::CodeGenerator *cg)
    {
-   TR_TreeEvaluatorFunctionPointer *tet = cg->getTreeEvaluatorTable();
-
+   OMR::TreeEvaluatorFunctionPointerTable tet = cg->getTreeEvaluatorTable();
+   
    tet[TR::awrtbar] = TR::TreeEvaluator::awrtbarEvaluator;
    tet[TR::awrtbari] = TR::TreeEvaluator::awrtbariEvaluator;
    tet[TR::monent] = TR::TreeEvaluator::monentEvaluator;
@@ -12109,13 +12109,10 @@ TR::Register *J9::Power::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::
    TR::Linkage      *linkage;
    TR::Register        *returnRegister;
 
-   if (callee->getRecognizedMethod() == TR::jdk_incubator_vector_FloatVector_add &&
-       node->getOpCodeValue() == TR::vcall) // was vectorized
-      {
-      TR::Node::recreate(node, TR::vadd);
-      return vaddEvaluator(node, cg);
-      }
-   else if (callee->getRecognizedMethod() == TR::jdk_internal_vm_vector_VectorSupport_binaryOp &&
+#if 0
+   // TODO: this code is a temporary example of using vcall and will be removed when all new
+   // vector opcodes are added
+   if (callee->getRecognizedMethod() == TR::jdk_internal_vm_vector_VectorSupport_binaryOp &&
        node->getOpCodeValue() == TR::vcall) // was vectorized
       {
       // The following code is temporary and can only be enabled for specific opcodes in VectorAPIExpansion.
@@ -12161,11 +12158,13 @@ TR::Register *J9::Power::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::
       TR::Node::recreate(node, TR::vadd);
       return vaddEvaluator(node, cg);
       }
-   else if (callee->getRecognizedMethod() >= TR::FirstVectorMethod &&
+   else
+#endif       
+      if (callee->getRecognizedMethod() >= TR::FirstVectorMethod &&
             callee->getRecognizedMethod() <= TR::LastVectorMethod &&
             node->getOpCodeValue() == TR::vcall) // was vectorized
       {
-      TR_ASSERT_FATAL_WITH_NODE(node, false, "vcall is not supported for this Vector API method yet\n");
+      TR_ASSERT_FATAL_WITH_NODE(node, false, "vcall is not supported for this Vector API method\n");
       }
 
 
