@@ -1417,10 +1417,10 @@ TR::Node *TR_VectorAPIExpansion::blendIntrinsicHandler(TR_VectorAPIExpansion *op
    if (mode == checkVectorization)
       {
       if (!supportedOnPlatform(comp, vectorLength)) return NULL;
-
+#if 0 // enable when evaluator is implemented
       if (!comp->cg()->getSupportsOpCodeForAutoSIMD(vectorOpCode, elementType))
          return NULL;
-
+#endif 
       return node;
       }
 
@@ -1551,10 +1551,10 @@ TR::Node *TR_VectorAPIExpansion::compareIntrinsicHandler(TR_VectorAPIExpansion *
 
       if (vectorOpCode == TR::BadILOp)
           return NULL;
-
+#if 0  // Enable when evaluator is supported
       if (!comp->cg()->getSupportsOpCodeForAutoSIMD(vectorOpCode, elementType))
          return NULL;
-
+#endif
       return node;
       }
 
