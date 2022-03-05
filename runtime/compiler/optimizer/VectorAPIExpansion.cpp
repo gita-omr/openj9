@@ -714,6 +714,9 @@ TR_VectorAPIExpansion::expandVectorAPI()
       if (node->getOpCodeValue() == TR::checkcast ||
          node->getOpCodeValue() == TR::NULLCHK)
          {
+#if 1 // TODO: fix REALLY HACKY WAY TO REMOVE checkcast and NULLCHK
+         TR::Node::recreate(node, TR::treetop);
+#else         
          TR::Node *firstChild = node->getFirstChild();
          if (firstChild->getOpCodeValue() == TR::PassThrough)
             firstChild = firstChild->getFirstChild();
@@ -727,6 +730,7 @@ TR_VectorAPIExpansion::expandVectorAPI()
                TR::Node::recreate(node, TR::treetop);
                }
             }
+#endif         
          continue;
          }
 
