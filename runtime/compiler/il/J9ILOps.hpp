@@ -169,9 +169,11 @@ public:
 
       }
 
+   static TR::ILOpCodes getDataTypeConversion(TR::DataType t1, TR::DataType t2);
+
    static TR::ILOpCodes getProperConversion(TR::DataType sourceDataType, TR::DataType targetDataType, bool needUnsignedConversion)
       {
-      TR::ILOpCodes op = TR::DataType::getDataTypeConversion(sourceDataType, targetDataType);
+      TR::ILOpCodes op = getDataTypeConversion(sourceDataType, targetDataType);
       if (!needUnsignedConversion) return op;
 
       switch (op)
