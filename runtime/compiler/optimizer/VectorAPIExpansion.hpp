@@ -705,7 +705,6 @@ class TR_VectorAPIExpansion : public TR::Optimization
    */
    static TR::Node *unaryIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode);
 
-
   /** \brief
    *    Scalarizes or vectorizes a node that is a call to \c VectorSupport.binaryOp() intrinsic.
    *    In both cases, the node is modified in place.
@@ -735,6 +734,34 @@ class TR_VectorAPIExpansion : public TR::Optimization
    */
    static TR::Node *binaryIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode);
 
+  /** \brief
+   *    Scalarizes or vectorizes a node that is a call to \c VectorSupport.reductionCoerced() intrinsic.
+   *    In both cases, the node is modified in place.
+   *    In the case of scalarization, extra nodes are created(number of lanes minus one)
+   *
+   *   \param opt
+   *      This optimization object
+   *
+   *   \param treeTop
+   *      Tree top of the \c node
+   *
+   *   \param node
+   *      Node to transform
+   *
+   *   \param elementType
+   *      Element type
+   *
+   *   \param vectorLength
+   *      Full vector length in bits (e.g. 128 for Float128Vector)
+   *
+   *   \param mode
+   *      Handler mode
+   *
+   *   \return
+   *      Transformed node
+   *
+   */
+   static TR::Node *reductionCoercedIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode);
 
   /** \brief
    *    Scalarizes or vectorizes a node that is a call to \c VectorSupport.ternaryOp() intrinsic.

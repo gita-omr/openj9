@@ -1308,12 +1308,17 @@ TR::Node *TR_VectorAPIExpansion::binaryIntrinsicHandler(TR_VectorAPIExpansion *o
    return naryIntrinsicHandler(opt, treeTop, node, elementType, vectorLength, mode, 2);
    }
 
+TR::Node *TR_VectorAPIExpansion::reductionCoercedIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node,
+                                                                  TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode)
+   {
+   return naryIntrinsicHandler(opt, treeTop, node, elementType, vectorLength, mode, 1);
+   }
+
 TR::Node *TR_VectorAPIExpansion::ternaryIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node,
                                                         TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode)
    {
    return naryIntrinsicHandler(opt, treeTop, node, elementType, vectorLength, mode, 3);
    }
-
 
 TR::Node *TR_VectorAPIExpansion::naryIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node,
                                                       TR::DataType elementType, vec_sz_t vectorLength, handlerMode mode,
@@ -1679,9 +1684,9 @@ TR_VectorAPIExpansion::methodTable[] =
    {blendIntrinsicHandler, TR::NoType, Vector, {Unknown, Unknown, elementType, numLanes, Vector, Vector, Vector, Unknown}}, // jdk_internal_vm_vector_VectorSupport_blend
    {broadcastCoercedIntrinsicHandler, TR::NoType, Vector, {Unknown, elementType, numLanes, Unknown, Unknown, Unknown}},  // jdk_internal_vm_vector_VectorSupport_broadcastCoerced
    {compareIntrinsicHandler, TR::NoType, Vector, {Unknown, Unknown, Unknown, elementType, numLanes, Vector, Vector, Mask}}, // jdk_internal_vm_vector_VectorSupport_compare
-   {ternaryIntrinsicHandler, TR::NoType, Vector,  {Unknown, Unknown, Unknown, elementType, numLanes, Vector, Vector, Vector, Mask}},  // jdk_internal_vm_vector_VectorSupport_ternaryOp
-   {unaryIntrinsicHandler, TR::NoType, Vector,  {Unknown, Unknown, Unknown, elementType, numLanes, Vector, Mask}},  // jdk_internal_vm_vector_VectorSupport_unaryOp
-
+   {reductionCoercedIntrinsicHandler, TR::NoType, Vector, {Unknown, Unknown, Unknown, elementType, numLanes, Vector, Mask}},  // jdk_internal_vm_vector_VectorSupport_reductionCoerced
+   {ternaryIntrinsicHandler, TR::NoType, Vector, {Unknown, Unknown, Unknown, elementType, numLanes, Vector, Vector, Vector, Mask}},  // jdk_internal_vm_vector_VectorSupport_ternaryOp
+   {unaryIntrinsicHandler, TR::NoType, Vector,   {Unknown, Unknown, Unknown, elementType, numLanes, Vector, Mask}},  // jdk_internal_vm_vector_VectorSupport_unaryOp
    {unsupportedHandler /*fromArrayHandler*/,      TR::Float,  Vector,  {Species}}, // jdk_incubator_vector_FloatVector_fromArray,
    {unsupportedHandler /*intoArrayHandler*/,      TR::Float,  Unknown, {Vector}},  // jdk_incubator_vector_FloatVector_intoArray,
    {unsupportedHandler,    TR::Float,  Vector,  {Species}},                 // jdk_incubator_vector_FloatVector_fromArray_mask
