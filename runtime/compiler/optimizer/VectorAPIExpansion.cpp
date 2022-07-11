@@ -1779,6 +1779,7 @@ TR::Node *TR_VectorAPIExpansion::transformNary(TR_VectorAPIExpansion *opt, TR::T
          node->setNumChildren(numOperands);
 
          TR::Node::recreate(node, vectorOpCode);
+         node->setFlags(0); // GITA
          }
 
       }

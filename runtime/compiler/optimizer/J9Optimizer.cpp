@@ -448,6 +448,14 @@ const OptimizationStrategy hotStrategyOpts[] =
    { OMR::earlyLocalGroup                                                 },
    { OMR::stripMiningGroup,                      OMR::IfLoops                  }, // strip mining in loops
    { OMR::loopReplicator,                        OMR::IfLoops                  }, // tail-duplication in loops
+
+#if 0   
+   { OMR::expensiveGlobalValuePropagationGroup,  OMR::IfVectorAPI              },  // GITA
+   { OMR::globalCopyPropagation,                 OMR::IfVectorAPI              },  // GITA
+   { OMR::localCSE,                              OMR::IfVectorAPI              },  // GITA
+   { OMR::osrGuardRemoval                                       },  // GITA          
+#endif
+   
    { OMR::blockSplitter,                         OMR::IfNews                   }, // treeSimplification + blockSplitter + VP => opportunity for EA
    { OMR::expensiveGlobalValuePropagationGroup                            },
    { OMR::localCSE,                              OMR::IfVectorAPI },
@@ -540,6 +548,14 @@ const OptimizationStrategy scorchingStrategyOpts[] =
    { OMR::andSimplification                                  }, // needs commoning across blocks to work well; must be done after versioning
    { OMR::stripMiningGroup,                      OMR::IfLoops     }, // strip mining in loops
    { OMR::loopReplicator,                        OMR::IfLoops     }, // tail-duplication in loops
+
+#if 0   
+   { OMR::expensiveGlobalValuePropagationGroup,  OMR::IfVectorAPI              },  // GITA
+   { OMR::globalCopyPropagation,                 OMR::IfVectorAPI              },  // GITA
+   { OMR::localCSE,                              OMR::IfVectorAPI              },  // GITA
+   { OMR::osrGuardRemoval                                       },                 // GITA          
+#endif
+
    { OMR::blockSplitter,                         OMR::IfNews      }, // treeSimplification + blockSplitter + VP => opportunity for EA
    { OMR::arrayPrivatizationGroup,               OMR::IfNews      }, // must precede escape analysis
    { OMR::veryExpensiveGlobalValuePropagationGroup           },
@@ -554,6 +570,10 @@ const OptimizationStrategy scorchingStrategyOpts[] =
    { OMR::globalDeadStoreElimination,            OMR::IfVectorAPI }, // global dead store removal
    { OMR::deadTreesElimination,                  OMR::IfVectorAPI }, // cleanup after dead store removal
    { OMR::vectorAPIExpansion,                    OMR::IfVectorAPI },
+
+   { OMR::osrGuardRemoval   /*,                    OMR::IfEnabled */  }, // GITA // run after calls/monents/asyncchecks have been removed
+
+   
    { OMR::loopCanonicalizationGroup,             OMR::IfLoops     }, // canonicalize loops (improve fall throughs)
    { OMR::inductionVariableAnalysis,             OMR::IfLoops     },
    { OMR::redundantInductionVarElimination,      OMR::IfLoops     },

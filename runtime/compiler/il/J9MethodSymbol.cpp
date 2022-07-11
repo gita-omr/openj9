@@ -145,6 +145,10 @@ J9::MethodSymbol::functionCallDoesNotYieldOSR()
       case TR::java_nio_Bits_keepAlive:
          return true;
       default:
+         if (self()->getRecognizedMethod() >= TR::FirstVectorMethod &&
+             self()->getRecognizedMethod() <= TR::LastVectorIntrinsicMethod)
+            return true;
+         
          return OMR::MethodSymbolConnector::functionCallDoesNotYieldOSR();
       }
    return false;
