@@ -1394,6 +1394,8 @@ TR::Node *TR_VectorAPIExpansion::naryIntrinsicHandler(TR_VectorAPIExpansion *opt
       {
       if (mode == checkVectorization)
          {
+         return NULL; // GITA
+         
          // can create the opcode only after checking if the length is supported
          if (supportedOnPlatform(comp, vectorLength) == TR::NoVectorLength) return NULL;
 
@@ -1470,6 +1472,8 @@ TR::Node *TR_VectorAPIExpansion::fromBitsCoercedIntrinsicHandler(TR_VectorAPIExp
 
    if (mode == checkVectorization)
       {
+      return NULL; // GITA
+      
       if (!supportedOnPlatform(comp, vectorLength)) return NULL;
 
       TR::ILOpCodes splatsOpCode = TR::ILOpCode::createVectorOpCode(TR::vsplats, elementType.scalarToVector(OMR::DataType::bitsToVectorLength(vectorLength)));
@@ -1592,6 +1596,8 @@ TR::Node *TR_VectorAPIExpansion::compareIntrinsicHandler(TR_VectorAPIExpansion *
 
    if (mode == checkVectorization)
       {
+      return NULL; // GITA
+      
       if (!supportedOnPlatform(comp, vectorLength)) return NULL;
 
       if (vectorOpCode == TR::BadILOp)

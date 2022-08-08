@@ -90,6 +90,8 @@ void J9::X86::Linkage::alignLocalObjectWithCollectedFields(uint32_t & stackIndex
    // Add them to reflect the correct space needed for collected locals
    if (self()->cg()->getLocalsIG() && self()->cg()->getSupportsCompactedLocals())
       {
+      traceMsg(self()->comp()," GITA before padding: %d (%d)\n", stackIndex, atlas->getNumberOfPaddingSlots());
+
       uint8_t pointerSize  = self()->getProperties().getPointerSize();
       stackIndex -= pointerSize*atlas->getNumberOfPaddingSlots();
       traceMsg(self()->comp()," with padding: %d,", stackIndex);
