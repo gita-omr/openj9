@@ -1426,6 +1426,14 @@ TR::Node *TR_VectorAPIExpansion::ternaryIntrinsicHandler(TR_VectorAPIExpansion *
    return naryIntrinsicHandler(opt, treeTop, node, elementType, vectorLength, numLanes, mode, 3, Other);
    }
 
+TR::Node *TR_VectorAPIExpansion::testIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node,
+                                                         TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes,
+                                                         handlerMode mode)
+   {
+   return naryIntrinsicHandler(opt, treeTop, node, elementType, vectorLength, numLanes, mode, 1, Test);
+   }
+
+
 TR::Node *TR_VectorAPIExpansion::naryIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node,
                                                       TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes,
                                                       handlerMode mode,
@@ -1434,6 +1442,10 @@ TR::Node *TR_VectorAPIExpansion::naryIntrinsicHandler(TR_VectorAPIExpansion *opt
    TR::Compilation *comp = opt->comp();
    TR::Node *opcodeNode = node->getFirstChild();
    int firstOperand = 5;
+
+   if (opCodeType == Test)
+      firstOperand = 4;
+
    TR::Node *maskNode = node->getChild(firstOperand + numChildren);
    bool withMask = !maskNode->isConstZeroValue();
 
@@ -1657,9 +1669,19 @@ TR::ILOpCodes TR_VectorAPIExpansion::ILOpcodeFromVectorAPIOpcode(int32_t vectorA
    // TODO: support more scalarization
 
    bool scalar = (vectorLength == TR::NoVectorLength);
-   TR::DataType vectorType = scalar ? TR::NoType : TR::DataType::createVectorType(elementType.getDataType(), vectorLength);
+   TR::DataType vectorType = scalar ? TR::NoType : TR::DataType::createVectorType(elementType, vectorLength);
 
-   if (opCodeType == Compare && withMask)
+   if (opCodeType == Test && withMask)
+      {
+      switch (vectorAPIOpCode)
+         {
+         case BT_ne:       return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::mmAnyTrue, vectorType);
+         case BT_overflow: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::mmAllTrue, vectorType);
+         default:
+            return TR::BadILOp;
+         }
+      }
+   else if (opCodeType == Compare && withMask)
       {
       switch (vectorAPIOpCode)
          {
@@ -1909,6 +1931,7 @@ TR_VectorAPIExpansion::methodTable[] =
    {fromBitsCoercedIntrinsicHandler,  Vector,  {Unknown, elementType, numLanes, Unknown, Unknown, Unknown}},                // jdk_internal_vm_vector_VectorSupport_fromBitsCoerced
    {reductionCoercedIntrinsicHandler, Scalar,  {Unknown, Unknown, Unknown, elementType, numLanes, Vector, Mask}},           // jdk_internal_vm_vector_VectorSupport_reductionCoerced
    {ternaryIntrinsicHandler,          Vector,  {Unknown, Unknown, Unknown, elementType, numLanes, Vector, Vector, Vector, Mask}},  // jdk_internal_vm_vector_VectorSupport_ternaryOp
+   {testIntrinsicHandler,             Scalar,  {Unknown, Unknown, elementType, numLanes, Mask, Mask, Unknown}},             // jdk_internal_vm_vector_VectorSupport_test
    {unaryIntrinsicHandler,            Vector,  {Unknown, Unknown, Unknown, elementType, numLanes, Vector, Mask}},           // jdk_internal_vm_vector_VectorSupport_unaryOp
    };
 
