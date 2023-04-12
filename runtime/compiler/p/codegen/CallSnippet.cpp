@@ -342,6 +342,11 @@ uint8_t *TR::PPCCallSnippet::emitSnippetBody()
 
    getSnippetLabel()->setCodeLocation(cursor);
 
+   if (TR::Options::getVerboseOption(TR_VerboseSnippetFootprint))
+      {
+      cg()->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "GITA callSnippet"));
+      }
+   
    // Flush in-register arguments back to the stack for interpreter
    cursor = flushArgumentsToStack(cursor, callNode, getSizeOfArguments(), cg());
 

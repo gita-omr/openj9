@@ -271,6 +271,8 @@ TR_Debug::print(TR::FILE *pOutFile, TR::PPCStackCheckFailureSnippet * snippet)
    {
    uint8_t *cursor = snippet->getSnippetLabel()->getCodeLocation();
 
+   trfprintf(pOutFile, "GITA %p\n", snippet->getSnippetLabel()->getCodeLocation());
+   
    printSnippetLabel(pOutFile, snippet->getSnippetLabel(), cursor, "Stack Check Failure Snippet");
 
    TR::ResolvedMethodSymbol *bodySymbol=_comp->getJittedMethodSymbol();
