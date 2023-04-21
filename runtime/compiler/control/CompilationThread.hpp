@@ -410,6 +410,9 @@ class CompilationInfoPerThreadBase
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
 private:
+
+   uint32_t calculateSnippetsSize(TR::Compilation *compiler);
+   
    void logCompilationSuccess(
       J9VMThread *vmThread,
       TR_J9VMBase & vm,

@@ -10875,9 +10875,11 @@ void TR::CompilationInfoPerThreadBase::logCompilationSuccess(
       J9JavaVM * javaVM = _jitConfig->javaVM;
       // Dump mixed mode disassembly listing.
       //
-      if (compiler->getOutFile() != NULL && compiler->getOption(TR_TraceAll))
+      if (compiler->getOutFile() != NULL /*&& compiler->getOption(TR_TraceAll)*/)
+         {
          compiler->getDebug()->dumpMixedModeDisassembly();
-
+         }
+      
       if (!vm.isAOT_DEPRECATED_DO_NOT_USE())
          {
          if (J9_EVENT_IS_HOOKED(javaVM->hookInterface, J9HOOK_VM_DYNAMIC_CODE_LOAD))
@@ -11192,6 +11194,18 @@ void TR::CompilationInfoPerThreadBase::logCompilationSuccess(
             if (TR::Options::getVerboseOption(TR_VerbosePerformance))
                TR_VerboseLog::write(" queueTime=%zuus", currentTime - _methodBeingCompiled->_entryTime);
 
+            if (TR::Options::getVerboseOption(TR_VerboseFootprint))
+               {
+               uint32_t snippets = compiler->cg()->getCodeSnippetsSize() + compiler->cg()->getDataSnippetsSize();
+               uint32_t outOfLine = compiler->cg()->getOutOfLineCodeSize();
+               uint32_t allBlocksSize;
+               uint32_t sizeBeforeFirstBlock;
+               uint32_t coldBlocks = compiler->cg()->getColdBlocksSize(allBlocksSize, sizeBeforeFirstBlock);
+               uint32_t extra = compiler->cg()->getCodeEnd() - compiler->cg()->getCodeStart() - allBlocksSize - sizeBeforeFirstBlock - outOfLine - snippets;
+
+               TR_VerboseLog::write(" snippets=%iB outOfLine=%iB coldBlocks=%iB extra=%iB", snippets, outOfLine, coldBlocks, extra);
+               }
+            
             TR_VerboseLog::writeLine("");
             }
 
