@@ -1195,7 +1195,7 @@ TR::Instruction *J9::X86::AMD64::PrivateLinkage::buildPICSlot(TR::X86PICSlot pic
    //
    if (picSlot.needsJumpToDone())
       {
-      instr = generateLabelInstruction(TR::InstOpCode::JMP4, node, doneLabel, cg());
+      instr = generateLabelInstruction(TR::InstOpCode::JMP1, node, doneLabel, cg());
       instr->setNeedsGCMap(site.getPreservedRegisterMask());
       }
 

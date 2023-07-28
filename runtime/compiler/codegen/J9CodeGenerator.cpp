@@ -1680,6 +1680,11 @@ J9::CodeGenerator::doInstructionSelection()
 
    bool fixedUpBlock = false;
 
+   if (self()->comp()->getOption(TR_SplitWarmAndColdBlocks) &&
+       !self()->comp()->compileRelocatableCode())
+      setIsInWarmCodeCache();  // needed on 390
+
+   
    for (TR::TreeTop *tt = self()->comp()->getStartTree(); tt; tt = self()->getCurrentEvaluationTreeTop()->getNextTreeTop())
       {
       if(traceLiveMon)
@@ -1833,6 +1838,18 @@ J9::CodeGenerator::doInstructionSelection()
                traceMsg(self()->comp(),"\tblock_%d branches backwards, so free all symbols in the _variableSizeSymRefPendingFreeList\n",b->getNumber());
             self()->freeAllVariableSizeSymRefs();
             numEBBsSinceFreeingVariableSizeSymRefs = 0;
+            }
+
+         if (b->isLastWarmBlock())
+            {
+            resetIsInWarmCodeCache();
+            // Mark the split point between warm and cold instructions, so they
+            // can be allocated in different code sections.
+            //
+            if (self()->comp()->getOption(TR_TraceCG))
+               traceMsg(self()->comp(), "Setting last warm instruction on %p\n", prevInstr);
+            
+            prevInstr->setLastWarmInstruction(true);
             }
          }
 

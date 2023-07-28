@@ -2474,6 +2474,7 @@ void J9::X86::PrivateLinkage::buildVPIC(TR::X86CallSite &site, TR::LabelSymbol *
    cg()->reserveNTrampolines(VPicParameters.defaultNumberOfSlots);
    }
 
+
 void J9::X86::PrivateLinkage::buildInterfaceDispatchUsingLastITable (TR::X86CallSite &site, int32_t numIPicSlots, TR::X86PICSlot &lastPicSlot, TR::Instruction *&slotPatchInstruction, TR::LabelSymbol *doneLabel, TR::LabelSymbol *lookupDispatchSnippetLabel, TR_OpaqueClassBlock *declaringClass, uintptr_t itableIndex )
    {
    static char *breakBeforeInterfaceDispatchUsingLastITable = feGetEnv("TR_breakBeforeInterfaceDispatchUsingLastITable");
@@ -2499,7 +2500,7 @@ void J9::X86::PrivateLinkage::buildInterfaceDispatchUsingLastITable (TR::X86Call
       // TODO: This is lame.  Without IPIC slots, generating this sequence
       // upside-down is sub-optimal.
       //
-         generateLabelInstruction(TR::InstOpCode::JMP4, callNode, lastITableTestLabel, cg());
+      generateLabelInstruction(TR::InstOpCode::JMP4, callNode, lastITableTestLabel, cg());
       }
 
    TR::Register *vftReg          = site.evaluateVFT();

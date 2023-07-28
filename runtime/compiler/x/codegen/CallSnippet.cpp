@@ -471,7 +471,7 @@ uint8_t *TR::X86PicDataSnippet::emitSnippetBody()
             picSlotCursor = (uint8_t *)(picSlotCursor - 1 + sizeofPicSlot);
             }
       }
-
+   
    return cursor;
    }
 
