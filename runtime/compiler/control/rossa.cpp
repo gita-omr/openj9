@@ -1190,7 +1190,7 @@ onLoadInternal(
       }
    else
       {
-      jitConfig->codeCacheKB = 2048;
+      jitConfig->codeCacheKB = TR::Options::getCmdLineOptions()->getOption(TR_DisclaimCodeCache) 2048 * 2 : 2048;
       jitConfig->dataCacheKB = 2048;
       }
 #else

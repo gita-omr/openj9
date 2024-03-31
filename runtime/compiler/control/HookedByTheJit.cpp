@@ -3569,6 +3569,38 @@ void lowerCompilationLimitsOnLowVirtualMemory(TR::CompilationInfo *compInfo, J9V
    }
 
 
+size_t getRSS_Kb()
+   {
+   size_t rss = 0;
+#if defined (LINUX)
+   ::FILE* statFile = fopen("/proc/self/status", "r");
+   if (statFile)
+      {
+      static const int bufferSize = 128;
+      char buffer[bufferSize];
+      bool foundRSS= false;
+
+      // Looking for something like
+      // VmRSS:    290028 kB
+      while (fgets(buffer, bufferSize, statFile))
+         {
+         if (strncmp(buffer, "VmRSS:", 6) == 0)
+            {
+            if (sscanf(buffer, "VmRSS: %zu kB", &rss) == 1)
+               {
+               foundRSS = true;
+               }
+            break;
+            }
+         }
+      fclose(statFile);
+      if (!foundRSS)
+         rss = 0;
+      }
+#endif
+   return rss;
+   }
+
 J9Method * getNewInstancePrototype(J9VMThread * context);
 
 static void getClassNameIfNecessary(TR_J9VMBase *vm, TR_OpaqueClassBlock *clazz, char *&className, int32_t &len)
@@ -5103,17 +5135,47 @@ static void jitStateLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInf
          }
       }
 
+   static int printRSS = 0;
+   printRSS++;
+   
+   if (printRSS == 4 &&   // ~every 2s
+       TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseFootprint))
+      {
+      TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "t=%u Current RSS %zuKB", (uint32_t)crtElapsedTime, getRSS_Kb());
+      printRSS = 0;
+      }         
+
+   // Cold code cache disclaim
    if (lateDisclaimNeeded)
       {
       CpuUtilization *cpuUtil = compInfo->getCpuUtil();
       cpuUtil->updateCpuUtil(jitConfig);
       if (cpuUtil->getVmTotalCpuTime() >= persistentInfo->getLateSCCDisclaimTime())
          {
+         size_t rssBefore = getRSS_Kb();
          javaVM->internalVMFunctions->jvmPhaseChange(javaVM, J9VM_PHASE_LATE_SCC_DISCLAIM);
          lateDisclaimNeeded = false;
+         
          if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
             {
             TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "t=%u JIT issuing late SCC disclaim", (uint32_t)crtElapsedTime);
+            }
+#if defined(J9VM_OPT_JITSERVER)
+         if (J9::PersistentInfo::_remoteCompilationMode != JITServer::SERVER)
+#endif
+            {
+            bool codeCacheDisclaim = TR::Options::getCmdLineOptions()->getOption(TR_DisclaimCodeCache);
+
+            if (codeCacheDisclaim)
+               {
+               TR::CodeCacheManager::instance()->disclaimAllCodeCaches();
+               size_t rssAfter = getRSS_Kb();
+
+               if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
+                  {
+                  TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "t=%u JIT disclaimed cold code cache, RSS before=%zuKB, RSS after=%zuKB, delta=%zdKB  = %5.2f%%", (uint32_t)crtElapsedTime, rssBefore, rssAfter, rssAfter - rssBefore, ((long )(rssAfter - rssBefore) * 100.0 / rssBefore));
+                  }
+               }
             }
          }
       }
