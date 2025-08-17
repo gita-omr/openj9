@@ -52,7 +52,7 @@ TR_VectorAPIExpansion::perform()
    {
    bool disableVectorAPIExpansion = comp()->getOption(TR_DisableVectorAPIExpansion);
    bool traceVectorAPIExpansion = comp()->getOption(TR_TraceVectorAPIExpansion);
-   _boxingAllowed = comp()->getOption(TR_EnableVectorAPIBoxing);
+   _boxingAllowed = true; //comp()->getOption(TR_EnableVectorAPIBoxing);
 
    _trace = traceVectorAPIExpansion;
 
