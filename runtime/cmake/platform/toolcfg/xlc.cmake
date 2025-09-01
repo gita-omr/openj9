@@ -21,7 +21,7 @@
 ################################################################################
 
 list(APPEND OMR_PLATFORM_COMPILE_OPTIONS
-	-g
+	-O3
 	-qstackprotect
 )
 
