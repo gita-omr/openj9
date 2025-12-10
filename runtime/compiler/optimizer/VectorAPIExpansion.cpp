@@ -1787,6 +1787,8 @@ TR_VectorAPIExpansion::unboxNode(TR::Node *parentNode, TR::Node *operand, vapiOb
    TR::Node *payloadLoad = TR::Node::createWithSymRef(operand, TR::aloadi, 1, payloadSymRef);
    payloadLoad->setAndIncChild(0, operand);
 
+   if (comp()->useCompressedPointers())
+      TR::Node::createCompressedRefsAnchor(payloadLoad);
 
    TR::ILOpCodes opcode = operandObjectType == Vector ?
                           TR::ILOpCode::createVectorOpCode(TR::vloadi, opCodeType)
