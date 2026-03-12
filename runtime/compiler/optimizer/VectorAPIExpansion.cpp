@@ -543,8 +543,11 @@ void TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node, bool v
             }
         }
     } else if (boxingAllowed()
+#if 0 // GITA
         && (node->getOpCodeValue() == TR::checkcast || node->getOpCodeValue() == TR::athrow
-            || node->getOpCodeValue() == TR::awrtbar)) {
+            || node->getOpCodeValue() == TR::awrtbar)
+#endif
+               ) {
         // do nothing here to allow this treetop when boxing is enabled
     } else {
         for (int32_t i = 0; i < node->getNumChildren(); i++) {
@@ -558,19 +561,19 @@ void TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node, bool v
                 }
 
                 if (boxingAllowed()) {
-                    logprintf(_trace, log, "Making #%d boxed since it's used by unsupported node %p (%s)\n",
-                        child->getSymbolReference()->getReferenceNumber(), node, node->getOpCode().getName());
+                   logprintf(_trace, log, "Making #%d boxed since it's used by unsupported node %p (%s)\n",
+                             child->getSymbolReference()->getReferenceNumber(), node, node->getOpCode().getName());
 
 #if 0
-               if (TR::Options::getVerboseOption(TR_VerboseVectorAPI))
-                  {
-                  TR_VerboseLog::writeLine(TR_Vlog_VECTOR_API, "Not vectorizing node since it's used by %s",
+                   if (TR::Options::getVerboseOption(TR_VerboseVectorAPI)) {
+                      TR_VerboseLog::writeLine(TR_Vlog_VECTOR_API, "Not vectorizing node since it's used by %s",
                                         node->getOpCode().getName());
-                  }
-               comp()->setVectorApiTransformationPerformed(true);
+                      }
+                   comp()->setVectorApiTransformationPerformed(true);
 #endif
-                    dontVectorizeNode(child);
-                } else {
+                   dontVectorizeNode(child);
+                }
+                else {
                     logprintf(_trace, log, "Invalidating10 #%d since it's used by unsupported node %p (%s)\n",
                         child->getSymbolReference()->getReferenceNumber(), node, node->getOpCode().getName());
                     invalidateSymRef(child->getSymbolReference());
@@ -1295,6 +1298,9 @@ bool TR_VectorAPIExpansion::boxChild(TR::TreeTop *treeTop, TR::Node *node, uint3
     if (!isVectorizedOrScalarizedNode(child, elementType, bitsLength, objectType, scalarized))
         return true;
 
+    TR_ASSERT_FATAL(!node->getOpCode().isStoreIndirect() || i != 0, "Are we storing into a Vector API object?");  // GITA
+    TR_ASSERT_FATAL(!node->getOpCode().isBooleanCompare(), "Are we comparing two Vector API objects?");  // GITA
+
     TR::VectorLength vectorLength = OMR::DataType::bitsToVectorLength(bitsLength);
     int32_t elementSize = OMR::DataType::getSize(elementType);
     int32_t numLanes = bitsLength / 8 / elementSize;
@@ -1655,10 +1661,13 @@ void TR_VectorAPIExpansion::visitNodeToTransformIL(TR::TreeTop *treeTop, TR::Nod
 
     // Handle non-vectorized nodes by boxing their children
     if (boxingAllowed() && !vectorizedOrScalarizedNode
+#if 0  // GITA
         && (opCodeValue == TR::astore || opCodeValue == TR::astorei || opCode.isFunctionCall()
             || opCodeValue == TR::areturn || opCodeValue == TR::aRegStore || opCodeValue == TR::checkcast
             || opCodeValue == TR::athrow || opCodeValue == TR::awrtbar || opCode.isArrayRef()
-            || opCode.isLoadIndirect())) {
+            || opCode.isLoadIndirect())
+#endif
+        ) {
         logprintf(_trace, log, "Checking if children of non-vector node %p need to be boxed\n", node);
 
         uint16_t numChildren = node->getNumChildren();
